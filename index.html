@@ -1,0 +1,430 @@
+
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <!-- set styles on the top -->
+    <style>
+        .chart-container {
+            max-width: 800px;
+            /*border: 2px solid red;*/
+            margin: 0 auto;
+            /* auto centers the div */
+            font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+        }
+
+        svg {
+            /* border: 2px solid purple; */
+            overflow: visible;
+        }
+
+        h1 {
+            margin-left: 30px;
+            margin-bottom: 0;
+            /* border: 2px solid green; */
+        }
+
+        .x .tick line {
+            stroke: rgba(0, 0, 0, .2);
+        }
+
+        .y .tick line {
+            stroke: rgba(222, 219, 219, 0.69);
+
+
+        }
+
+        .x .domain {
+            display: none;
+        }
+
+        .y .domain {
+            display: none;
+        }
+
+        .y .tick text {
+            font-size: 14px;
+            fill: #333;
+
+        }
+
+        .x .tick text {
+            font-size: 14px;
+            fill: #333;
+        }
+
+        .y.axis .domiain{
+            display: none
+        }
+        .x.axis .domiain{
+            display: none
+        }
+        .x.label {
+            text-transform: uppercase;
+            font-size: 13px;
+            /* font-family: Arial, Helvetica, sans-serif; */
+            letter-spacing: .02em;
+            font-weight: 100;
+
+        }
+
+        .pop-up {
+            position: absolute; 
+            border: 1px solid black;
+            border-radius: 1px;
+            line-height: 1.2;
+            width: 200px;
+            pointer-events: none;
+            background-color: white;
+            padding: 10px;
+        }
+
+        .annotation {
+            font-size: 15px;
+            font-family: Arial, Helvetica, sans-serif;
+            font-style: italic;
+            font-weight: 200;
+        }
+        .change-btn{
+            margin: 10px 0 0 10px;
+            cursor: pointer;
+            background-image:none;
+            border: none;
+            display: inline-block;
+            font-weight:600;
+            vertical-align:middle;
+            padding:5px 10px;
+            font-size:13px;
+            box-shadow: 2px 2px #888888;
+
+        }
+    </style>
+</head>
+
+<body>
+    <div class="chart-container">
+        <h1 class="headline">
+            No.1: Playoff wins By Age
+        </h1>
+
+        <svg width="800px" height="1000px">
+
+        </svg>
+        <div class="pop-up">
+        </div>
+    </div>
+</body>
+
+<script src="https://d3js.org/d3.v6.min.js"></script>
+<!-- we're using d3 version 6 (the latest version) for all out work -->
+
+<script>
+    console.log({ d3 })
+    //https://observablehq.com/@mbostock/global-temperature-trends
+
+    //cool tricks for javascript arrays
+    //objects
+    //look up tables
+    //looping, or for each
+
+    let width = 830;
+    let height = 500;
+
+    let svg = d3.select("body")
+        .select("svg")
+
+    console.log(svg)
+
+
+    //console.log
+
+    //arrays
+    //objects
+    //functions
+
+    d3.csv("DV_HW3_Q3.csv").then(function (data) {
+
+        //when temp is loaded, then pass data into this block
+        //all references to the data need to be in this block
+
+        //d3.csv is part of a suite of other functions that can do json, xml, tsv too.  
+        //https://github.com/d3/d3-fetch
+
+
+        data.forEach(function (row) {
+            row.playoff_wins = +row.playoff_wins
+            row.year = +row.year
+            row.year_start=+row.year_start
+            row.year_end=+row.year_end
+            row.age_start=+row.age_start
+
+        })
+
+        
+
+        console.log(data)
+
+
+        let margin = { top: 30, right: 10, bottom: 10, left: 30 };
+
+        //d3 scales for the x and y axis
+        //domain takes the data we have and maps them into SVG space
+        //in this case we need to use scaleTime because we're dealin time data
+        let x = d3.scaleLinear()
+            .domain(d3.extent(data.map(function (d) { return d.year-d.year_start+d.age_start }))) //d3 extent
+            //.range([margin.left, width - margin.right])
+            .range([0, width - margin.right])
+
+        //in this case we need to use scaleLinear because we're dealin linear data
+        let y = d3.scaleLinear()
+            .domain(d3.extent(data.map(function (d) { return d.playoff_wins })))
+            .range([height - margin.bottom, margin.top])
+
+
+        //define the settings for our axes
+        //https://github.com/d3/d3-axis
+        // https://github.com/d3/d3-time-format
+        //https://github.com/d3/d3-format
+        let yAxisSettings = d3.axisRight(y) //set axis to the left
+            .tickValues([5,10,15,20,25,30,35])
+            .ticks(5) //approx how many ticks, the function will not necesarily give you that number
+            .tickSize(700) //size of tick lines
+            //.tickFormat(d3.format(".0f")) //what format do you want https://github.com/d3/d3-format 
+            .tickPadding(10) //distance from tick labels to tick marks
+            
+
+
+        let xAxisSettings = d3.axisBottom(x)
+            .tickValues([25,30,35,40])
+            .ticks(10)
+            .tickSize(10)
+            .tickPadding(10)
+            .tickFormat(d3.format(""))
+
+        let bg = svg.append("rect")
+            .attr("x", margin.left)
+            .attr("y", 0)
+            .attr("width", width)
+            .attr("height", height)
+            .style("fill", "rgba(0,0,0,0)")
+
+        //adding to the axes to our chart
+        let xAxisTicks = svg.append("g")
+            .attr("class", "x axis") //give each axis a class
+            .call(xAxisSettings)
+            .attr("transform", `translate(0,${height - margin.bottom})`)
+
+
+        let yAxisTicks = svg.append("g")
+            .attr("class", "y axis")
+            .call(yAxisSettings)
+            .attr("transform", `translate(0,${margin.right})`)
+            //.attr("transform", `translate(${margin.left},0)`)
+
+        let line = d3.line() //define a line function
+            //.defined(d => !(d[1][d[1].length-1].playoff_wins==0x))
+            //d[1][d[1].length-1].year_end==2021
+            .x(function (d) { return x(d.year-d.year_start+d.age_start) }) //accessing date 
+            .y(function (d) { return y(d.playoff_wins) }) //accesssing value 
+
+
+        
+        let grouped_data_1 = d3.group(data, d => d.player_id);
+        //let grouped_data=grouped_data_1(d=> !(d[1][d[1].length-1].playoff_wins ==0))
+        let grouped_data = [...grouped_data_1].filter( d=> d[1][d[1].length-1].playoff_wins>0)
+
+        console.log({grouped_data})
+
+        let agencies = Array.from(grouped_data.keys())
+        console.log({agencies})
+
+        let line_path = svg.append("g")
+        .selectAll(".line")
+        .data(grouped_data)
+        .join("path")
+        .attr("class", function(d) {
+            //console.log(d[0])
+            return "line " +  d[0]
+        })
+        .attr("d", function(d) {
+            console.log('***************')
+            console.log(d[1])
+            return line(d[1])
+        })
+        .style("fill", "none")
+        .style("stroke", d => {
+            if(d[0] == "BradTo00") {
+                return "blue"
+            } if(d[0] == "StarBa00") {
+                return "black"
+                
+            } if(d[0] == "BradTe00") {
+                return "black"
+            } if(d[0] == "TarkFr00") {
+                return "black"
+            } if(d[0] == "MontJo01") {
+                return "black"
+            } if(d[0] == "ElwaJo00") {
+                return "black"
+            } if(d[1][d[1].length-1].year_end==2021){
+                return "blue"
+            }
+            //if(d[1][d[1].length-1].playoff_wins==0){
+            //    return "white"
+            //}
+            else {
+                return "#ababab"
+            }
+        })
+        .style("stroke-width", d => {
+            if(d[0] == "BradTo00") {
+                return "3px"
+            } else {
+                return "1px"
+            }
+        })
+
+
+        let last =svg.append('g')
+        .selectAll('text')
+        .data(grouped_data)
+        .join('text')
+        .attr('x',d=>x(d[1][d[1].length-1].year-d[1][d[1].length-1].year_start+d[1][d[1].length-1].age_start)+20)
+        .attr('y', d=>y(d[1][d[1].length-1].playoff_wins))
+        .attr('dx',-40)
+        .attr('dy',-10)
+        .text(d=>d[1][0].last_name)
+        .style('fill', d=>{
+            if(d[1][0].player_name=='Tom Brady'){
+                return 'black'
+            }
+            if(d[1][0].player_name=='Bart Starr'){
+                return 'black'
+            }
+            if(d[1][0].player_name=='Fran Tarkenton'){
+                return 'black'
+            }
+            if(d[1][0].player_name=='Joe Montana'){
+                return 'black'
+            }
+            if(d[1][0].player_name=='John Elway'){
+                return 'black'
+            }
+            if(d[1][0].player_name=='Terry Bradshaw'){
+                return 'black'
+            }
+            else{
+                return 'none'}
+        })
+        .style("font",  d => {
+            if(d[1][0].player_name=='Tom Brady') {
+                return "25px times"
+            } else {
+                return "3px"
+            }
+        })
+        
+        svg.selectAll('circle')
+        .data(grouped_data)
+        .enter()
+        .append('circle')
+        .attr('cx',d=>x(d[1][d[1].length-1].year-d[1][d[1].length-1].year_start+d[1][d[1].length-1].age_start))
+        .attr('cy', d=>y(d[1][d[1].length-1].playoff_wins))
+        .attr('r', d=>{
+            if(d[1][0].player_name=='Tom Brady'){
+                return 4
+            }
+            else{
+                return 2
+            }
+
+        })
+        .style('fill', d=>{
+            if(d[1][0].player_name=='Tom Brady'){
+                return 'blue'
+            }
+            if(d[1][0].player_name=='Bart Starr'){
+                return 'black'
+            }
+            if(d[1][0].player_name=='Fran Tarkenton'){
+                return 'black'
+            }
+            if(d[1][0].player_name=='Joe Montana'){
+                return 'black'
+            }
+            if(d[1][0].player_name=='John Elway'){
+                return 'black'
+            }
+            if(d[1][0].player_name=='Terry Bradshaw'){
+                return 'black'
+            }
+            if(d[1][d[1].length-1].playoff_wins==0){
+                return "white"
+            }
+            else{
+                return 'rgba(222, 219, 219, 0.69)'}
+        })
+        let baseline = svg.append("line")
+        .attr("x1", margin.left-25)
+        .attr("x2", width + margin.left-160)
+        .attr("y1", y(0))
+        .attr("y2", y(0))
+        .style("stroke", "black")
+        .style("stroke-width", "2px")
+
+
+/* README*/       
+/* pop up, mouse over function partly work, it could correctly pop up the player's lable, but the line/stroke seems incorrect*/
+/* pls uncomment the following code and see what's going on~ */
+
+
+
+
+        //let shuffled = d3.shuffle(grouped_data);
+         
+        // let popup = d3.select(".pop-up");
+
+
+        // line_path.on("mouseover", (event, d) => {
+        //     console.log(event)
+
+        //     line_path
+        //         .style("stroke", "#333333")
+        //         .style("stroke-width", .5)
+        //         .style("fill", "#c0cad8")
+        //         .style("fill-opacity", .5)
+
+        //     svg.select(".line" + d[0])
+        //         .style("stroke", "black")
+        //         .style("stroke-width", 2)
+        //         .style("fill", "yellow")
+        //         .style("fill-opacity", 1)
+        //         .raise()
+
+        //     let lang = d[1][0].player_name + "( " + d[1][d[1].length-1].playoff_wins + " ) "
+        //     console.log(lang)
+
+        //     popup
+        //         .style("opacity", 1)
+        //         .style("left", (x(d[1][d[1].length-1].year-d[1][d[1].length-1].year_start+d[1][d[1].length-1].age_start)) + "px")
+        //         .style("top", (y(d[1][d[1].length-1].playoff_wins)) + "px")
+        //         .html(lang)
+
+        // })
+            
+
+        // line_path.on("mouseout", (event, d) => {
+        //     // console.log(event)
+
+        //     line_path
+        //         .style("stroke", "#333333")
+        //         .style("stroke-width", .5)
+        //         .style("fill", "#c0cad8")
+        
+        //     popup.style('opacity',0)
+        // })
+    })
+
+</script>
